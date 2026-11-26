@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="mk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#a9d39a">
+  <title>Возачки испит — Град</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- ================= HUD ================= -->
+  <div id="hud" class="hidden">
+    <div id="speedCard" class="card">
+      <div class="speed"><span id="spd">0</span><small>км/ч</small></div>
+      <div class="limit-wrap"><div id="limitSign" class="limit">50</div></div>
+      <div class="hud-col">
+        <div class="inds"><span id="indL" class="ind">◀</span><span id="gear" class="gear">D</span><span id="indR" class="ind">▶</span></div>
+        <div id="mirrorBadge" class="mirror"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="10" rx="5"/><path d="M12 16v4"/></svg>Ретровизор</div>
+      </div>
+    </div>
+
+    <div id="topRight">
+      <div class="card task-card">
+        <div id="scenTitle">Испит</div>
+        <div class="progress"><div id="progBar"></div></div>
+        <div id="progText"></div>
+      </div>
+      <div id="scoreCard" class="card score-card">
+        <div><span id="scoreVal">100</span><small> бодови</small></div>
+        <div id="mistakeCount">0 грешки</div>
+      </div>
+      <button id="btnPause" class="icon-btn" aria-label="Пауза"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button>
+    </div>
+
+    <div id="toasts"></div>
+
+    <div id="examiner" class="card">
+      <div class="ex-avatar"><svg viewBox="0 0 40 40"><circle cx="20" cy="15" r="7" fill="#f3c9a5"/><path d="M13 13a7 7 0 0 1 14 0c0-5-3-7-7-7s-7 2-7 7z" fill="#3b3f4a"/><path d="M6 38c1-8 7-12 14-12s13 4 14 12z" fill="#2f6fd1"/><path d="M17 26l3 5 3-5" fill="#fff"/></svg></div>
+      <div id="exIcon" class="ex-icon"></div>
+      <div class="ex-body">
+        <div class="ex-label">Испитувач</div>
+        <div id="exText">…</div>
+      </div>
+      <button id="btnReplay" class="icon-btn replay" aria-label="Повтори упатство" title="Повтори упатство (R)"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+    </div>
+
+    <div id="touch">
+      <div class="t-left">
+        <button id="tL" class="tbtn steer"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+        <button id="tR" class="tbtn steer"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+      </div>
+      <div class="t-mid">
+        <button id="tIndL" class="tbtn small">◀ Трепкач</button>
+        <button id="tMirror" class="tbtn small">Ретровизор</button>
+        <button id="tIndR" class="tbtn small">Трепкач ▶</button>
+      </div>
+      <div class="t-right">
+        <button id="tBrake" class="tbtn pedal brake">Сопирачка<small>(рикверц)</small></button>
+        <button id="tGas" class="tbtn pedal gas">Гас</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN MENU ================= -->
+  <div id="menu" class="screen">
+    <div class="panel menu-panel">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="12" fill="#2f6fd1"/><path d="M24 11v26" stroke="#fff" stroke-width="3" stroke-dasharray="4 4"/><rect x="15" y="14" width="8" height="13" rx="3" fill="#ffd43b"/><rect x="26" y="22" width="8" height="13" rx="3" fill="#fff"/></svg></div>
+        <div>
+          <h1>Возачки испит</h1>
+          <p class="sub">Практичен испит за градско возење</p>
+        </div>
+      </div>
+      <nav class="menu-buttons">
+        <button id="btnExam" class="btn primary"><span>Започни испит</span><small>Целосна рута низ градот</small></button>
+        <button id="btnPractice" class="btn"><span>Вежбање</span><small>Слободно возење со упатства</small></button>
+        <button id="btnScen" class="btn"><span>Избор на сценарио</span><small>11 посебни ситуации</small></button>
+        <div class="btn-row">
+          <button id="btnControls" class="btn ghost">Контроли</button>
+          <button id="btnSettings" class="btn ghost">Поставки</button>
+        </div>
+      </nav>
+      <p class="note">Бодувањето е симулација за вежбање и не ја претставува официјалната постапка за полагање возачки испит.</p>
+    </div>
+  </div>
+
+  <!-- ================= SCENARIOS ================= -->
+  <div id="scenarios" class="screen hidden">
+    <div class="panel wide">
+      <div class="panel-head"><button class="back" data-back>←</button><h2>Избор на сценарио</h2></div>
+      <div id="scenGrid" class="scen-grid"></div>
+    </div>
+  </div>
+
+  <!-- ================= CONTROLS ================= -->
+  <div id="controls" class="screen hidden">
+    <div class="panel">
+      <div class="panel-head"><button class="back" data-back>←</button><h2>Контроли</h2></div>
+      <div class="keys">
+        <div><kbd>W</kbd><kbd>↑</kbd><span>Забрзување</span></div>
+        <div><kbd>S</kbd><kbd>↓</kbd><span>Сопирање — задржете при мирување за рикверц</span></div>
+        <div><kbd>A</kbd><kbd>←</kbd><span>Управување лево</span></div>
+        <div><kbd>D</kbd><kbd>→</kbd><span>Управување десно</span></div>
+        <div><kbd>Space</kbd><span>Сопирање</span></div>
+        <div><kbd>Z</kbd><span>Лев трепкач (вкл./искл.)</span></div>
+        <div><kbd>X</kbd><span>Десен трепкач (вкл./искл.)</span></div>
+        <div><kbd>Q</kbd><span>Проверка на ретровизор</span></div>
+        <div><kbd>R</kbd><span>Повтори го упатството</span></div>
+        <div><kbd>P</kbd><kbd>Esc</kbd><span>Пауза</span></div>
+      </div>
+      <div class="tips">
+        <h3>Совети</h3>
+        <ul>
+          <li>Возилото е со автоматски менувач — нема квачило ни менување брзини.</li>
+          <li>Пред секое тргнување, свртување и менување лента: <b>Q</b> (ретровизор), па трепкач.</li>
+          <li>Упатствата на испитувачот се прикажуваат на дното на екранот.</li>
+          <li>Пешакот што чека на необезбеден премин е означен со жолт круг — пропуштете го.</li>
+          <li>На мобилен уред користете ги копчињата на екранот.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SETTINGS ================= -->
+  <div id="settings" class="screen hidden">
+    <div class="panel">
+      <div class="panel-head"><button class="back" data-back>←</button><h2>Поставки</h2></div>
+      <div class="settings">
+        <label class="row"><span>Глас на испитувачот</span><input type="checkbox" id="setVoice" class="switch"></label>
+        <div class="row col">
+          <span>Глас</span>
+          <div class="voice-line"><select id="setVoiceChoice"></select><button id="btnTestVoice" class="btn small">Тест</button></div>
+          <div id="voiceStatus" class="hint"></div>
+        </div>
+        <label class="row"><span>Брзина на говор</span>
+          <select id="setRate"><option value="0.85">Бавно</option><option value="1">Нормално</option><option value="1.15">Брзо</option></select></label>
+        <label class="row"><span>Звучни ефекти</span><input type="checkbox" id="setSfx" class="switch"></label>
+        <label class="row"><span>Звук на моторот</span><input type="checkbox" id="setEngine" class="switch"></label>
+        <label class="row"><span>Густина на сообраќај</span>
+          <select id="setDensity"><option value="low">Мала</option><option value="normal">Средна</option><option value="high">Голема</option></select></label>
+        <label class="row"><span>Помошна стрелка за правец</span><input type="checkbox" id="setHint" class="switch"></label>
+        <label class="row"><span>Прекини го испитот при критична грешка</span><input type="checkbox" id="setAbort" class="switch"></label>
+        <label class="row"><span>Зум на камерата</span>
+          <select id="setZoom"><option value="0.8">Далеку</option><option value="1">Нормално</option><option value="1.2">Блиску</option></select></label>
+        <label class="row"><span>Контроли на допир</span>
+          <select id="setTouch"><option value="auto">Автоматски</option><option value="on">Секогаш</option><option value="off">Никогаш</option></select></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PAUSE ================= -->
+  <div id="pause" class="screen overlay hidden">
+    <div class="panel narrow">
+      <h2>Пауза</h2>
+      <button id="btnResume" class="btn primary">Продолжи</button>
+      <button id="btnRestart" class="btn">Почни одново</button>
+      <button id="btnPauseMenu" class="btn ghost">Главно мени</button>
+    </div>
+  </div>
+
+  <!-- ================= RESULTS ================= -->
+  <div id="results" class="screen overlay hidden">
+    <div class="panel results-panel">
+      <div class="res-head">
+        <div id="resVerdict" class="verdict">ПОЛОЖИВТЕ</div>
+        <div id="resTitle" class="res-title"></div>
+        <div id="resSummary" class="res-summary"></div>
+      </div>
+      <div class="res-stats">
+        <div><b id="resScore">0</b><span>Бодови</span></div>
+        <div><b id="resMistakes">0</b><span>Грешки</span></div>
+        <div><b id="resCritical">0</b><span>Критични</span></div>
+        <div><b id="resTime">0:00</b><span>Време</span></div>
+      </div>
+      <h3 class="res-h">Анализа на возењето</h3>
+      <div id="resList" class="res-list"></div>
+      <div class="res-buttons">
+        <button id="btnRetry" class="btn primary">Обиди се повторно</button>
+        <button id="btnNext" class="btn hidden">Следно сценарио</button>
+        <button id="btnResMenu" class="btn ghost">Главно мени</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/traffic.js"></script>
+  <script src="js/peds.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/exam.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
